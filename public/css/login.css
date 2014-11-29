@@ -1,0 +1,51 @@
+/*for login form */
+.title {
+    font-family: 'Montserrat',sans-serif; 
+    font-size: 18pt;
+    color: white;
+}
+
+
+#divNav {
+    width: 100%;
+    background: #004C66;
+    padding: 3px;
+}
+#divLogin {
+    display: inline;
+}
+
+#divLogin label {  
+    font-family: 'Montserrat',sans-serif;
+    color: white;  
+}  
+
+#divLogin label input{
+    display: inline;
+}
+
+
+button {
+   border: 0px;
+   background: #fcfcfc;
+
+   -webkit-border-radius: 3px;
+   -moz-border-radius: 3px;
+   border-radius: 3px;
+
+   color: #000000;
+   font-size: 12px;
+   font-family: Helvetica, Arial, Sans-Serif;
+   text-decoration: none;
+   vertical-align: middle;
+
+}
+
+button:hover {
+   background: #ff5f59;
+   color: #ffffff;
+}
+
+button:active {
+   background: #000000;
+}

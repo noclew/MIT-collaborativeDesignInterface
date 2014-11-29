@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>infinite utopia 3d</title>
+
+	<!-- //////////////////// CSS  /////////////////// -->
+	<link rel="stylesheet" href="css/styles.css" type="text/css">
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Montserrat">
+	<link rel="stylesheet" href="css/login.css" type="text/css">
+
+	<!-- //////////////////// Java Script  /////////////////// -->
+	<script type="text/javascript" src="js/jquery.js"></script>  
+	<script type="text/javascript" src="threejs/three.min.js"></script>   
+	<script type="text/javascript" src="js/MainCShape.js" ></script> 
+	<script src="js/socket.io.js"></script> 
+	<script type="text/javascript" src="js/MainBackend.js" ></script> 
+	<script type="text/javascript" src="js/snap.svg-min.js"></script>	
+	<script src="threejs/controls/TrackballControls.js"></script>
+
+	<script type="x-shader/x-vertex" id="vertexshader">
+
+		uniform float amplitude;
+
+		attribute vec3 displacement;
+		attribute vec3 customColor;
+
+		varying vec3 vColor;
+
+		void main() {
+
+			vec3 newPosition = position + amplitude * displacement;
+
+			vColor = customColor;
+
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+
+		}
+
+	</script>
+	<script type="x-shader/x-fragment" id="fragmentshader">
+
+		uniform vec3 color;
+		uniform float opacity;
+
+		varying vec3 vColor;
+
+		void main() {
+
+			gl_FragColor = vec4( vColor * color, opacity );
+
+		}
+	</script>
+
+
+	<!-- //////////////////// HTML bodies /////////////////// -->
+</head>
+<body onload="Main(); MainBackend();">
+
+	<!-- //////////////////// Login Div /////////////////// -->
+	<div id="divNav">  
+		<span class="title">INFINITE UTOPIA</span>
+		<div id = "divLogin" >
+			<label>UserEmail</label>  
+			<input type="email" name="usermail" id="nameInput" placeholder="yourname@email.com" required>
+			<label for="password">Password</label>  
+			<input type="password" name="password" id="passwordInput" placeholder="password" required>
+			<button type="button" onclick="loginButtonClicked()">Login</button>
+		</div>
+	</div>  
+
+	<!-- //////////////////// Drawing Div /////////////////// -->
+	<div id="central">
+		<div id = "ground">
+		</div>
+		<div id='canvasDraw'>
+			<div id="div3d" >
+			</div> 
+		</div> 
+		<div id="menubar" class="titles">
+			<p id="draw">DRAW!</p>
+		</div> 
+	</div>  
+
+</body>
+</html>

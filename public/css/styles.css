@@ -1,0 +1,127 @@
+html {
+	height: 100%;
+}
+
+body {
+  font-family: Consolas, monaco, monospace;
+  font-size: 12px;   
+  background-color: #0378A7;    
+  padding:0px;
+  margin: 0px;
+  height: 100%;
+  overflow-y: hidden;
+  overflow-x: auto;
+
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-o-user-select: none;
+user-select: none; /* this enables user from selecting text*/
+
+}
+
+/*for login form */
+.loginform ul {  
+    padding: 0;  
+    margin: 0;  
+}  
+.loginform li {  
+    display: inline;  
+    float: left;  
+}  
+
+
+#draw {
+    cursor: pointer;
+}
+
+#div3d 
+{
+    /*background-color: rgba(255,255,255,0.5);*/
+    border-style: solid;
+    border-color: #F07061;
+    border-width: 4px;
+    position: absolute; 
+       
+}
+#central{
+    position: absolute;
+    background-color: #0378A7;
+    color: #FFFFFF;
+    width: 100%;
+    height: 100%;
+   /* top: 40px;*/
+    
+}
+#canvasDraw{
+    position: absolute;
+
+}
+
+#menubar{
+    position: fixed;
+    background-color: #FFFFFF;
+    color: #000000;
+    width: 100%;
+    height: 5%;
+    text-align: center;
+    cursor: pointer;
+}
+#draw {
+    cursor: pointer;
+}
+#ground{
+    position: fixed;
+    background-color: #A2B743;
+    color: #000000;
+    width: 100%;
+    height: 100px;
+    bottom: 0px;
+    text-align: center;
+}
+
+#btnHolder{
+    position: absolute;
+    background-color: rgba(0,0,0,0);
+    width: 30px;
+    height: 300px;
+    text-align: left;
+    padding: 5px;
+}
+
+.btns{
+    
+    position: center;
+    vertical-align: center;
+
+    background-color: rgba(255,255,255,1);
+
+    width: 25px;
+    height: 25px;
+    text-align: right;
+    margin-top: 10px;
+    margin-left: 10px;
+    cursor: pointer;
+    
+   
+}
+
+#submit{
+    /*background-image: url('straight.jpg') no-repeat;
+    background-color: rgba(255,255,255,1);*/
+    position: absolute;
+    /*background-color: rgba(255,255,255,1);*/
+    width: 50px;
+    height: 25px;
+    text-align: right;
+    cursor: pointer;
+
+    
+}
+
+
+#drawCanvas{
+    position: absolute;
+   
+}
+
