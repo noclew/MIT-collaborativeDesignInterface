@@ -24,7 +24,7 @@ var cubematerial = new THREE.MeshBasicMaterial( { ambient: 0x030303, color: 0xdd
 var cube;
 
 //var click circle geometry
-var circlegeometry = new THREE.CircleGeometry(0.06, 32);
+var circlegeometry = new THREE.CircleGeometry(0.5, 32);
 var circlematerial = new THREE.MeshBasicMaterial({color: 0xF07061});
 var circle;
 
@@ -50,6 +50,8 @@ var group;
 
 var object, uniforms, attributes;
 var shaderMaterial;
+
+var objects = [];
 
 
 function Main(){
@@ -121,34 +123,6 @@ function Main(){
 
 
     draw.addEventListener( 'click', onDrawMouseDown, false );
-
-    attributes = {
-
-                displacement: { type: 'v3', value: [] },
-                customColor: {  type: 'c', value: [] }
-
-            };
-
-            uniforms = {
-
-                amplitude: { type: "f", value: 5.0 },
-                opacity:   { type: "f", value: 0.3 },
-                color:     { type: "c", value: new THREE.Color( 0xff0000 ) }
-
-     };
-
-    shaderMaterial = new THREE.ShaderMaterial( {
-
-                uniforms:       uniforms,
-                attributes:     attributes,
-                vertexShader:   document.getElementById( 'vertexshader' ).textContent,
-                fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
-                blending:       THREE.AdditiveBlending,
-                depthTest:      false,
-                transparent:    true
-
-    });
-
 
 
 }
@@ -294,7 +268,11 @@ function onDrawMouseDown(event){
     planeXY = new THREE.Mesh( planeXYGeometry, new THREE.MeshBasicMaterial( { color: 0x000000, opacity: 0.25, transparent: true, wireframe: true } ) );
 
     planeXY.visible = true;
+
     scene.add( planeXY );
+
+    objects.push(planeXY);
+    
     //................................................
     
     //....................................................cube
@@ -307,42 +285,18 @@ function onDrawMouseDown(event){
 
     render();
 
+    sendGetAllPointsMessage();
+
 }
 
 function render() {
 
     //controls.update();
-
-    var time = Date.now() * 0.001;
-    
-    renderer.autoClear = false;
-    renderer.clear();
     requestAnimationFrame(render);
-
 
     cube.rotation.x += 0.1;
     cube.rotation.y += 0.1;
 
-    uniforms.amplitude.value = 0.5 * Math.sin( 0.5 * time );
-            uniforms.color.value.offsetHSL( 0.0005, 0, 0 );
-
-            var nx, ny, nz, value;
-
-            for( var i = 0, il = attributes.displacement.value.length; i < il; i ++ ) {
-
-                nx = 0.3 * ( 0.5 - Math.random() );
-                ny = 0.3 * ( 0.5 - Math.random() );
-                nz = 0.3 * ( 0.5 - Math.random() );
-
-                value = attributes.displacement.value[ i ];
-
-                value.x += nx;
-                value.y += ny;
-                value.z += nz;
-
-            }
-
-            attributes.displacement.needsUpdate = true;
 
     //renderer.render(backgroundScene, backgroundCamera);
     renderer.render(scene, camera);
@@ -430,6 +384,8 @@ function VNew(x,y,z) {
 function addPoint(){
 circle = new THREE.Mesh( circlegeometry, circlematerial);
 scene.add(circle); 
+
+//objects.push(circle);
 return circle;  
 }
 
@@ -457,6 +413,8 @@ function createShortLine(p0,p1){
     var line = new THREE.Line( linegeometry, linematerial );
 
     scene.add(line);
+
+   // objects.push(line);
     return line;
 }
 
@@ -479,32 +437,14 @@ function createStepLine(p0,p1){
     var end = VNew(p1.x-offset, p1.y-offset, p1.z);
 
     
-
     var linegeometry = new THREE.Geometry();
     linegeometry.vertices.push(start, m1, end);
-    
-
-    var vertices = linegeometry.vertices;
-    linegeometry.dynamic = true;
   
     line = new THREE.Line( linegeometry, linematerial );
-    //var vertices = linegeometry.geometry;
-    console.log(vertices);
-
-    var displacement = attributes.displacement.value;
-    var color = attributes.customColor.value;
-
-    for (var v = 0; v < vertices.length; v++){
-
-                displacement[ v ] = new THREE.Vector3();
-
-                color[ v ] = new THREE.Color( 0xffffff );
-                color[ v ].setHSL( v / vertices.length, 0.5, 0.5 );
-
-            }
-
 
     scene.add(line);
+
+   // objects.push(line);
 
     return line;
 }
@@ -542,81 +482,282 @@ function extrudeLine(d){
     return ext;
 }
 
+//  ██████╗ ██████╗  ██████╗ ██████╗ ██████╗ ██╗███╗   ██╗ █████╗ ████████╗███████╗███████╗
+// ██╔════╝██╔═══██╗██╔═══██╗██╔══██╗██╔══██╗██║████╗  ██║██╔══██╗╚══██╔══╝██╔════╝██╔════╝
+// ██║     ██║   ██║██║   ██║██████╔╝██║  ██║██║██╔██╗ ██║███████║   ██║   █████╗  ███████╗
+// ██║     ██║   ██║██║   ██║██╔══██╗██║  ██║██║██║╚██╗██║██╔══██║   ██║   ██╔══╝  ╚════██║
+// ╚██████╗╚██████╔╝╚██████╔╝██║  ██║██████╔╝██║██║ ╚████║██║  ██║   ██║   ███████╗███████║
+//  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝
+                                                                                        
+// ████████╗██████╗  █████╗ ███╗   ██╗███████╗███████╗ ██████╗ ██████╗ ███╗   ███╗         
+// ╚══██╔══╝██╔══██╗██╔══██╗████╗  ██║██╔════╝██╔════╝██╔═══██╗██╔══██╗████╗ ████║         
+//    ██║   ██████╔╝███████║██╔██╗ ██║███████╗█████╗  ██║   ██║██████╔╝██╔████╔██║         
+//    ██║   ██╔══██╗██╔══██║██║╚██╗██║╚════██║██╔══╝  ██║   ██║██╔══██╗██║╚██╔╝██║         
+//    ██║   ██║  ██║██║  ██║██║ ╚████║███████║██║     ╚██████╔╝██║  ██║██║ ╚═╝ ██║         
+//    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝  
 
-//--------------------------------------------drawing
+function getIntersectionAtScreenCoordinates(x,y) {
+    var nx = ( (event.x - $(drawCanvas).offset().left)/ renderW ) * 2 - 1;
+    var ny =  - ( (event.y - $(drawCanvas).offset().top) / height ) * 2 + 1;
 
-function onDocumentMouseMove( event ) {
-    //prevent default mouse interactions from the web browser
-    event.preventDefault();
-
-
-    //get the normalized screen coordinates of the mouse location [-1,-1] to [1,1]
-    mouse.x = ( (event.x - $(drawCanvas).offset().left)/ renderW ) * 2 - 1;
-    //console.log(event);
-    mouse.y = - ( (event.y - $(drawCanvas).offset().top) / height ) * 2 + 1;
-
-    //form a vector from the screen coordinates and transform it to find the mouse position in the actual XYZ space
-    var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+    var vector = new THREE.Vector3( nx, ny, 0.5 );
     projector.unprojectVector( vector, camera );
 
-    //create a ray from the viewer eye to the mouse
     var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
 
-    //intersect the ray with the drawing plane
-    var intersects = raycaster.intersectObject( planeXY );
+
+    var intersects = raycaster.intersectObjects( objects );
+
     if ( intersects.length > 0 ) {
-            //if an intersection was found set the mouse3d location to that point 
-            mouse3d=intersects[ 0 ].point;
-            cube.position.copy( mouse3d );
+        return intersects[ 0 ];
     }
 
+    return null;
 }
+
+// ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗
+// ████╗ ████║██╔═══██╗██║   ██║██╔════╝██╔════╝
+// ██╔████╔██║██║   ██║██║   ██║███████╗█████╗  
+// ██║╚██╔╝██║██║   ██║██║   ██║╚════██║██╔══╝  
+// ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝███████║███████╗
+// ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
+var mouseMoved=false;
+
+function onDocumentMouseMove( event ) {
+    var x=event.clientX;
+    var y=event.clientY;
+
+    if (Math.abs(mouseXdown-x)>10 || Math.abs(mouseYdown-y)>10)  mouseMoved=true;
+
+    event.preventDefault();
+    
+
+    var mouseIntersection=getIntersectionAtScreenCoordinates(x, y);
+    if (mouseIntersection) 
+        mouse3d=mouseIntersection.point;
+
+    cube.position.copy( mouse3d );
+    //spotLight.position.set( mouse3d.x, mouse3d.y+1.0, mouse3d.z+2.0 );
+}
+
+var mouseXdown=0;
+var mouseYdown=0;
+function onDocumentMouseDown( event ) {
+    mouseMoved=false;
+
+    mouseXdown=event.clientX;
+    mouseYdown=event.clientY;
+}
+
+ function onDocumentMouseUp( event ) {
+    if(mouseMoved) return;
+    var x=event.clientX;
+    var y=event.clientY;
+
+    var mouseIntersection = getIntersectionAtScreenCoordinates(x, y);
+
+    if (event.button==0) {
+        sendAddPointMessage(mouse3d);   
+        //sendRequest2PointMessage();   
+    }
+    else {
+        if (mouseIntersection.object.serverid) {
+            event.stopPropagation();
+             event.preventDefault();
+            sendRemovePointMessage(mouseIntersection.object.serverid);
+        }
+    }
+}
+//--------------------------------------------drawing
+
 //points repository
 var points=[];
 var lines = [];
 var circles = [];
 
-//on mouse down just add a new SPoint at the mouse location [calculated each time the mouse moves]
-function onDocumentMouseDown( event ) {
-    event.preventDefault();
-    event.stopPropagation();
 
-    if (event.button==0) {
-        var np=new SPoint(mouse3d);
-    }
-    else {
-        points = [];
-    }
+//.........................................................MultiUser
+
+// ███████╗ ██████╗  ██████╗██╗  ██╗███████╗████████╗██╗ ██████╗ 
+// ██╔════╝██╔═══██╗██╔════╝██║ ██╔╝██╔════╝╚══██╔══╝██║██╔═══██╗
+// ███████╗██║   ██║██║     █████╔╝ █████╗     ██║   ██║██║   ██║
+// ╚════██║██║   ██║██║     ██╔═██╗ ██╔══╝     ██║   ██║██║   ██║
+// ███████║╚██████╔╝╚██████╗██║  ██╗███████╗   ██║██╗██║╚██████╔╝
+// ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝╚═╝╚═╝ ╚═════╝ 
+                                                             
+//...........................................................socket.io
+
+var socket=io();    //connect to socket.io
+
+//connect to server through socket.io. the io function is defined in the socket.io library and it creates a connection at the specified address and port. it returns a socket object which we can use to emit and respond to messages using socket.emit() and socket.on() respectively
+//var socket=io('http://127.0.0.1:6789'); //connect to the local host [your own computer running node.js] [the local host is always identified by the reserved address 127.0.0.1]
+//var socket=io('http://10.0.1.8:6789'); //connect to some computer in your local network. you can find the address by checking the IP address in the properties of your connection
+//var socket=io('http://coopclass-22377.onmodulus.net'); //this is a server i have set up on the internet using modulus.io. 
+//user clicks to add point, message is sent to socket
+function sendAddPointMessage(point) {
+    socket.emit("requestAddPoint", {point:point});
 }
 
-function onDocumentMouseUp( event ) {
- 
+function sendRequest2PointMessage() {
+    socket.emit("request2Point", {});
+}
+
+function sendRemovePointMessage(id) {
+    socket.emit("requestRemovePoint", {id:id});
+}
+
+function sendGetAllPointsMessage() {
+    socket.emit("requestGetAllPoints", {});
 }
 
 
-function SPoint(_p){
+//socket sends message that it added cube to its list so we now add the geo
+socket.on("serverAddedPoint", function(data){
+    addPointModel(data.point, data.id);
+});
+socket.on("serverGotPoints", function(data){
+    addLineModel(data.pt1, data.pt2);
+});
+socket.on("serverRemovedPoint", function(data){
+    removePointModel(data.id);
+});
+
+socket.on("allPointsFromServer", function(data){
+    for(var i in data) {
+        addPointModel(data[i].point, data[i].id);
+    }
+});
+/*function sendAddCubeMessage(point) {
+    socket.emit("requestAddCube", {point:point});
+}
+
+function sendRemoveCubeMessage(id) {
+    socket.emit("requestRemoveCube", {id:id});
+}
+
+function sendGetAllCubesMessage() {
+    socket.emit("requestGetAllCubes", {});
+}
+
+
+socket.on("serverAddedCube", function(data){
+    addCubeModel(data.point, data.id);
+});
+
+socket.on("serverRemovedCube", function(data){
+    removeCubeModel(data.id);
+});
+
+socket.on("allCubesFromServer", function(data){
+    for(var i in data) {
+        addCubeModel(data[i].point, data[i].id);
+    }
+});*/
+
+//  █████╗ ██████╗ ██████╗                                                
+// ██╔══██╗██╔══██╗██╔══██╗                                               
+// ███████║██║  ██║██║  ██║                                               
+// ██╔══██║██║  ██║██║  ██║                                               
+// ██║  ██║██████╔╝██████╔╝                                               
+// ╚═╝  ╚═╝╚═════╝ ╚═════╝                                                
+                                                                       
+//  ██████╗ ███████╗ ██████╗ ███╗   ███╗███████╗████████╗██████╗ ██╗   ██╗
+// ██╔════╝ ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+// ██║  ███╗█████╗  ██║   ██║██╔████╔██║█████╗     ██║   ██████╔╝ ╚████╔╝ 
+// ██║   ██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══╝     ██║   ██╔══██╗  ╚██╔╝  
+// ╚██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║   ██║  ██║   ██║   
+//  ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
+//.............................................Object creation/removal
+/*
+function SPoint( _p , id){
     this.p=new THREE.Vector3(_p.x, _p.y, _p.z);
     this.t=new Date();
 
-    points.push(this);
+    this.p=new THREE.Vector3(_p.x, _p.y, _p.z);
 
-    //if this point is added when there is at least one more point in the list
-    //then a new segment mesh is created between this point and its previous neighbour
-    //each points holds the segment tat connects it to its predecessor in the this.mesh variable
-    //this is usefull so that later if you move points you can find out 
-    //which meshes to update
-    this.mesh=null;
-    this.mesh2 = null;
-    this.mesh3 = null;
+    points.push(this);
+    objects.push(points);
+
     if (points.length>=1) {
         
         circles.push(addPoint().position.copy(mouse3d));
         console.log(circles.length);
-        //addCircle(points[points.length-2].p, points[points.length-1].p).position.copy(mouse3d);
-        //this.mesh2=createStepLine(points[points.length-2].p, points[points.length-1].p);
-        this.mesh=lineType(points[points.length-2].p, points[points.length-1].p);
-        //this.mesh2=createSpline(points[points.length-2].p, points[points.length-1].p);
-        lines.push(this.mesh);
+        lines.push(lineType(points[points.length-2].p, points[points.length-1].p));
         }
+}*/
+
+function addPointModel(point, id){
+    var newPt = new THREE.Vector3(point.x, point.y, point.z);
+    var newCirc = addPoint();
+
+    points.push(newPt);
+
+    newCirc.serverid= id;
+    newCirc.position.copy( point );
+
+    if (points.length>=1){
+        var connect2 = lineType(points[points.length-2], points[points.length-1]);
+
+        connect2.serverid = id;
+        lines.push(connect2);
+        objects.push(connect2);
+       // scene.add(connect2);
+
+    }
+
+    objects.push(newCirc);
+    scene.add(newCirc);
+
 }
+
+function addLineModel(pt1, pt2){
+
+    if (points.length>=1){
+        var connect2 = lineType(pt2, pt1);
+
+        //connect2.serverid = id;
+        lines.push(connect2);
+        objects.push(connect2);
+       // scene.add(connect2);
+
+    }
+
+}
+
+
+
+function removePointModel(id) {  
+    for(var i=0; i<objects.length; ++i) {
+        if (objects[i].serverid==id) {
+            scene.remove( objects[i] );
+            objects.splice( i, 1 );
+            return;
+        }
+    }
+}
+
+/*function addCubeModel(point, id) {
+    var newcube = new THREE.Mesh( cubegeometry, cubematerial );
+
+   
+    
+    newcube.serverid=id;
+    newcube.position.copy( point );
+
+    objects.push(newcube);
+    scene.add( newcube );
+
+    return newcube;
+}
+
+
+function removeCubeModel(id) {  
+    for(var i=0; i<objects.length; ++i) {
+        if (objects[i].serverid==id) {
+            scene.remove( objects[i] );
+            objects.splice( i, 1 );
+            return;
+        }
+    }
+}*/
 

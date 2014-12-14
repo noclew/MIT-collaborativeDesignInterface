@@ -3,15 +3,83 @@ var express = require('express');
 var app=express();
 var http=require('http');
 
-
+//map exrress default file folder to the subfolder /public under the folder that contains app.js [__dirname]
 app.use(express.static(__dirname + '/public'));
 
 
-var server = app.listen(process.env.PORT || 8080, function() {
-  console.log('Listening on port %d', server.address().port);
+//start the server listening at port 6789 when running locally or to the default remote port when deploying online
+var server = app.listen(process.env.PORT || 6789, function() {
+    console.log('Listening on port %d', server.address().port);
+});
+
+//................................Socket.io
+//initialize socket.io to listen to the same server as express
+var io = require('socket.io').listen(server);
+
+//create an empty list of objects. Here we will store each 3d object in order for the server to act as a persistent storage. Even if all clients disconnect the server will still have a record of the created geometry
+var objects={};
+var points={};
+//this is a counter. Each time a new tripod is added to the server it gets this unique id that increases by one. Therefore each tripod has a unique identifying number. The clients receive this number for each object from the server so that for example when a client deletes an object it can ask the server to delete the object with the same id 
+var id=1;
+var pt1;
+var pt2;
+
+//each time a client is connected to socket.io this callback function is run
+//within this functio nwe can set up the message listeners for the connections from each client
+io.sockets.on('connection', function (socket) {
+  console.log("CONNECTION");
+
+  //when a client disconnects this message is received
+  socket.on('disconnect', function(){
+  });
+
+  //......................................................custom messages
+  //these are the messages we receive from the clients. For each message we setup a callback function that processes the data of the message and possibly replies to one or all the connected clients
+
+  //a client sends this message when it needs to add a new model
+  //the data contain just the transformation matrix of the object that the client wants to add
+   socket.on('requestAddPoint', function(data){   
+ 
+    //we attach a unique id to the data
+    data.id=id;
+    //store the data to our objects storage. We store objects by their id so that we can find them easily later
+    objects[id]=data;
+
+    //increase the id. Therefore the next object to be added will get a new unique id number
+    id++;
+
+    //emit the data to all connected clients so that they are all notified and create the newly added geometry. these data now contains both the matrix and the id of the newly added element
+    io.sockets.emit('serverAddedPoint', data);
+  });
+
+  socket.on('request2Point', function(data){
+
+    if (objects.length >= 2){
+     pt1 = objects[objects.length-1];
+     pt2 = objects[objects.length-2];
+    }
+    
+    io.socket.emit('serverGotPoints', data);
+  })
+
+  //a client sends this message when it needs to remove a model
+  socket.on('requestRemovePoint', function(data){   
+ 
+    delete objects[data.id];                //delete the object with the requested id from the storage
+
+    io.sockets.emit('serverRemovedPoint', data);  //notify all clients that object was removed
+  });
+
+  //a client sends this message when they first connect in order to get all the existing models
+  socket.on('requestGetAllPoints', function(data){   
+ 
+    socket.emit('allPointsFromServer', objects);  //simply send all the stored objects to the client
+  });
+  
 });
 
 
+/*
 // //................................................................
 // ███╗   ███╗ ██████╗ ███╗   ██╗ ██████╗  ██████╗    ██████╗ ██████╗ 
 // ████╗ ████║██╔═══██╗████╗  ██║██╔════╝ ██╔═══██╗   ██╔══██╗██╔══██╗
@@ -55,114 +123,4 @@ db.open(function(err, db) {
 
 //.............End of mongo DB..........................................
 
-
-
-//...............................................................
-// ███████╗ ██████╗  ██████╗██╗  ██╗███████╗████████╗██╗ ██████╗ 
-// ██╔════╝██╔═══██╗██╔════╝██║ ██╔╝██╔════╝╚══██╔══╝██║██╔═══██╗
-// ███████╗██║   ██║██║     █████╔╝ █████╗     ██║   ██║██║   ██║
-// ╚════██║██║   ██║██║     ██╔═██╗ ██╔══╝     ██║   ██║██║   ██║
-// ███████║╚██████╔╝╚██████╗██║  ██╗███████╗   ██║██╗██║╚██████╔╝
-// ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝   ╚═╝╚═╝╚═╝ ╚═════╝                                                        
-//.............................http://patorjk.com/software/taag/#p=display&f=Calvin%20S&t=SOCKET.IO
-
-
-var io = require('socket.io').listen(server);
-
-var users={};
-var id=1;
-
-io.sockets.on('connection', function (socket) {
-  console.log("CONNECTION");
-
-  // socket.user={'id':"user"+id, 'socket':socket};
-  // id++;
-
-  // users[socket.user.id]=socket.user;
-  
-  // var allusers=[];
-  // for(var i in users) {
-  //   allusers.push({id:users[i].id, pos:users[i].pos});
-  // }
-
-  socket.emit('welcome', {});
-  console.log("user connected:");
-  //socket.broadcast.emit('userJoined', {'id':socket.user.id, 'pos':socket.user.pos});
-
-
-  // login function
-  socket.on('login', function(data){
-    console.log('login has been requested by a user')
-
-    userCollection.findOne({name:data.name}, function(_err, _doc) {
-      if (_doc) { //name found
-        console.log("findOne:"+data.name); 
-        if (_doc.password==data.password) {
-
-          userCollection.update( {_id: ObjectID(_doc._id) }, {"$set": {color: data.color}});
-
-          var userpacket={name:_doc.name, _id:_doc._id, color:data.color};
-          socket.emit("loggedin", userpacket);        
-          socket.broadcast.emit("userJoined", userpacket);
-          socket.user=_doc;
-        }
-        else {
-          console.log("password mismatch:");
-          socket.emit("loginFailed", {error:"password mismatch"});
-        }
-      }
-      else //name doesn't exist 
-      {
-        userCollection.insert(data, {w:1}, function(_err, _docs) {
-          if (_docs && _docs.length) {
-            var u=_docs[0];
-            console.log("inserted:" + _docs[0].name);
-            var userpacket={name:u.name, _id:u._id, color:u.color};
-            socket.user=u;
-            socket.emit("loggedin", userpacket);        
-            socket.broadcast.emit("userJoined", userpacket);
-          }
-          else {
-            socket.emit("loginFailed", {error:"can't add user"});
-            console.log("can't add user")
-          }
-
-        });            
-      }
-      
-    });
-});
-
-socket.on('disconnect', function(){
-  if (!socket.user) return;
-  io.sockets.emit('userLeft', {'id':socket.user.id});
-  delete users[socket.user.id];
-});
-
-  //......................................................
-  socket.on('moved', function(data){
-    socket.user.pos=data.pos; //remember the last position of each user
-    io.sockets.emit('moved', data);
-  });
-
-  socket.on('clicked', function(data){
-    io.sockets.emit('clicked', data);
-  });
-
-  socket.on('setStyleProperty', function(data){
-    io.sockets.emit('setStyleProperty', data);
-  });
-
-  socket.on('setText', function(data){
-    io.sockets.emit('setText', data);
-  });
-
-  socket.on('addNote', function(data){
-    io.sockets.emit('addNote', data);
-  });
-
-  socket.on('removeNote', function(data){
-    io.sockets.emit('removeNote', data);
-  });
-  
-});
+*/
